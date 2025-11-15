@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-M">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de QR con Java</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: grid;
+            place-items: center;
+            min-height: 90vh;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 320px;
+        }
+        input[type="text"] {
+            width: 90%;
+            padding: 10px;
+            margin-bottom: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #ccc; }
+        #qr-result {
+            margin-top: 1.5rem;
+            min-height: 250px; /*Para guardar el espacio*/ 
+        }
+        #qr-result img {
+            max-width: 100%;
+            border: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Generador QR (Spring Boot)</h2>
+        <p>Introduce una URL para generar tu QR</p>
+        <input type="text" id="url-input" placeholder="Ej: https://www.linkedin.com/...">
+        <button id="generate-btn">Generar</button>
+        <div id="qr-result">
+            <img id="qr-image" src="" alt="Código QR">
+        </div>
+    </div>
+
+    <script>
+        //JavaScript
+        const urlInput = document.getElementById('url-input');
+        const generateBtn = document.getElementById('generate-btn');
+        const qrImage = document.getElementById('qr-image');
+
+        // Cuando se haga clic en el botón...
+        generateBtn.addEventListener('click', async () => {
+            const url = urlInput.value;
+            if (!url) {
+                alert('Por favor, introduce una URL');
+                return;
+            }
+
+            // Preparamos todo para la llamada a la API
+            const apiEndpoint = 'http://localhost:8080/api/v1/generate-qr'; 
+            const payload = { url: url }; 
+
+            try {
+                // Deshabilitamos el botón mientras se genera
+                generateBtn.disabled = true;
+                generateBtn.textContent = 'Generando...';
+                qrImage.src = ''; // Limpiamos la imagen anterior
+
+                // 1. Usamos 'fetch' para llamar a tu API
+                const response = await fetch(apiEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json' // Avisamos que enviamos JSON
+                    },
+                    body: JSON.stringify(payload) // Convertimos nuestro objeto JS en un string JSON
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error en el servidor al generar el QR');
+                }
+
+                // La respuesta no es JSON, es una imagen.
+                const imageBlob = await response.blob();
+
+                // Convertimos el blob en una URL que la etiqueta <img> entiende
+                const imageUrl = URL.createObjectURL(imageBlob);
+
+                // Se muestra la imgen
+                qrImage.src = imageUrl;
+                qrImage.alt = `Código QR para ${url}`;
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('No se pudo generar el QR. Revisa la consola.');
+            } finally {
+                // Volvemos a habilitar el botón
+                generateBtn.disabled = false;
+                generateBtn.textContent = 'Generar';
+            }
+        });
+    </script>
+
+</body>
+</html>
